@@ -286,7 +286,7 @@
                     <input type="hidden" id="qaStudentId">
                     <div>
                         <label class="text-xs font-bold text-gray-500 mb-1 block">Nominal (Rp)</label>
-                        <input type="number" id="qaAmount" placeholder="Contoh: 5000" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 font-bold text-gray-700" required min="100">
+                        <input type="number" id="qaAmount" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 font-bold text-gray-700" required min="100">
                     </div>
                     <button type="submit" id="btnSubmitQuick" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 hover:from-theme-600 hover:to-theme-700 text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 flex items-center justify-center">
                         <i class="fa-solid fa-piggy-bank mr-2"></i> Simpan Tabungan
@@ -309,11 +309,11 @@
                 <form id="formProfile" class="space-y-4">
                     <div>
                         <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Pengelola</label>
-                        <input type="text" id="inputAdminName" placeholder="Contoh: Bu Guru Ani" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700" required>
+                        <input type="text" id="inputAdminName" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700" required>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Sekolah (Bisa Dikosongkan)</label>
-                        <input type="text" id="inputSchoolName" placeholder="Contoh: TK Kridosiwi" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700">
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Sekolah</label>
+                        <input type="text" id="inputSchoolName" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700">
                     </div>
                     <button type="submit" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 hover:from-theme-600 hover:to-theme-700 text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 mt-2">
                         Simpan Profil
@@ -425,6 +425,35 @@
         function formatRupiah(number) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
         }
+
+        // Fungsi Animasi Angka Bergerak (Counter Animation)
+        function animateValue(element, start, end, duration = 600) {
+            if (start === end) {
+                element.innerText = formatRupiah(end);
+                return;
+            }
+            let range = end - start;
+            let startTime = null;
+
+            function step(currentTime) {
+                if (!startTime) startTime = currentTime;
+                let progress = Math.min((currentTime - startTime) / duration, 1);
+                // Fungsi easing cubic-out untuk mulus di akhir
+                let easeProgress = 1 - Math.pow(1 - progress, 3);
+                let current = Math.floor(start + (range * easeProgress));
+                element.innerText = formatRupiah(current);
+
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    element.innerText = formatRupiah(end);
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        let previousTotalBalance = 0;
+        const previousStudentBalances = {};
 
         function showToast(message, type = 'success') {
             toastMsg.innerText = message;
@@ -590,7 +619,11 @@
 
         function renderDashboard() {
             const totalClass = students.reduce((sum, student) => sum + student.balance, 0);
-            totalSchoolBalanceEl.innerText = formatRupiah(totalClass);
+            
+            // Jalankan animasi hitung untuk total saldo keseluruhan kelas
+            animateValue(totalSchoolBalanceEl, previousTotalBalance, totalClass, 600);
+            previousTotalBalance = totalClass;
+
             listStudentsEl.innerHTML = '';
             
             const sortedStudents = [...students].sort((a, b) => a.name.localeCompare(b.name));
@@ -618,11 +651,12 @@
                 filteredStudents.forEach((student, index) => {
                     const li = document.createElement('li');
                     li.className = 'bg-white border-2 border-gray-50 rounded-2xl p-3 flex items-center justify-between hover:border-gray-200 hover:shadow-md transition group item-transition';
-                    li.style.animationDelay = (index * 0.05) + 's'; // Efek bertahap / staggered
+                    li.style.animationDelay = (index * 0.04) + 's';
                     
                     const isMinus = student.balance < 0;
                     const balanceColor = isMinus ? 'text-rose-500' : 'text-gray-800';
                     const number = index + 1;
+                    const balanceId = 'bal_' + student.id;
 
                     li.innerHTML = `
                         <div class="flex items-center space-x-3 cursor-pointer flex-1 overflow-hidden" onclick="openStudentDetail('${student.id}')">
@@ -634,7 +668,7 @@
                         <div class="flex items-center space-x-2 flex-shrink-0">
                             <div class="text-right cursor-pointer mr-1" onclick="openStudentDetail('${student.id}')">
                                 <p class="text-[9px] text-gray-400 font-black uppercase tracking-wider mb-0.5">Saldo</p>
-                                <p class="font-black ${balanceColor} text-sm">${formatRupiah(student.balance)}</p>
+                                <p class="font-black ${balanceColor} text-sm" id="${balanceId}">Rp 0</p>
                             </div>
                             <button type="button" onclick="openQuickAddModal('${student.id}', event)" class="w-9 h-9 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition shadow-sm active:scale-95 z-10 relative flex-shrink-0" title="Nabung Cepat">
                                 <i class="fa-solid fa-plus text-base"></i>
@@ -645,6 +679,14 @@
                         </div>
                     `;
                     listStudentsEl.appendChild(li);
+
+                    // Jalankan animasi untuk saldo masing-masing anak
+                    const prevBal = previousStudentBalances[student.id] || 0;
+                    const el = document.getElementById(balanceId);
+                    if(el) {
+                        animateValue(el, prevBal, student.balance, 500);
+                    }
+                    previousStudentBalances[student.id] = student.balance;
                 });
             }
         }
@@ -679,7 +721,6 @@
         }, {passive: true});
 
         function handleSwipeGesture() {
-            // Jika usapan dari kiri ke kanan melampaui 70 piksel
             if (touchEndX - touchStartX > 70) {
                 returnToDashboard();
             }
@@ -690,7 +731,11 @@
             if (!student) return;
 
             detailStudentNameEl.innerText = student.name;
-            detailStudentBalanceEl.innerText = formatRupiah(student.balance);
+            
+            // Animasi hitung saldo detail murid
+            const oldDetailVal = previousStudentBalances[student.id + '_detail'] || 0;
+            animateValue(detailStudentBalanceEl, oldDetailVal, student.balance, 500);
+            previousStudentBalances[student.id + '_detail'] = student.balance;
             
             if(student.balance < 0) {
                 detailStudentBalanceEl.classList.add('text-red-300');
@@ -921,6 +966,7 @@
 
         formSheetSettings.addEventListener('submit', (e) => {
             e.preventDefault();
+            sheetUrl = inputSheetUrl.value.trim();
             closeSheetSettingsModal(); 
             showToast('Tautan Sheets permanen!');
         });
