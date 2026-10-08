@@ -123,6 +123,12 @@
 
     <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[95vh] max-h-[850px] border-4 border-white relative transition-all duration-300">
         
+        <!-- Status Koneksi Offline Indicator -->
+        <div id="offlineIndicator" class="bg-amber-500 text-white text-[10px] font-extrabold px-3 py-1 text-center hidden flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Mode Offline - Data disimpan di HP, sinkron otomatis saat online</span>
+        </div>
+
         <!-- VIEW 1: ADMIN DASHBOARD -->
         <div id="viewDashboard" class="flex flex-col h-full fade-in">
             <!-- Header Guru -->
@@ -394,6 +400,7 @@
         const inputTransNote = document.getElementById('inputTransNote');
         const listTransactionsEl = document.getElementById('listTransactions');
         const emptyTransactionEl = document.getElementById('emptyTransaction');
+        const offlineIndicator = document.getElementById('offlineIndicator');
         
         // Modal Elements
         const themeModal = document.getElementById('themeModal');
@@ -438,7 +445,6 @@
             function step(currentTime) {
                 if (!startTime) startTime = currentTime;
                 let progress = Math.min((currentTime - startTime) / duration, 1);
-                // Fungsi easing cubic-out untuk mulus di akhir
                 let easeProgress = 1 - Math.pow(1 - progress, 3);
                 let current = Math.floor(start + (range * easeProgress));
                 element.innerText = formatRupiah(current);
@@ -524,7 +530,65 @@
             localStorage.setItem('tabungan_theme', themeName);
         }
 
+        // Simpan antrean data offline di localStorage
+        function getOfflineQueue() {
+            try {
+                return JSON.parse(localStorage.getItem('tabungan_offline_queue')) || [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveOfflineQueue(queue) {
+            localStorage.setItem('tabungan_offline_queue', JSON.stringify(queue));
+        }
+
+        async function processOfflineQueue() {
+            let queue = getOfflineQueue();
+            if (queue.length === 0 || !navigator.onLine) return;
+
+            offlineIndicator.innerHTML = `<i class="fa-solid fa-rotate animate-spin"></i><span>Menyelaraskan ${queue.length} data offline ke Google Sheets...</span>`;
+            offlineIndicator.classList.remove('hidden');
+
+            let remainingQueue = [];
+            for (let item of queue) {
+                try {
+                    await fetch(sheetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(item)
+                    });
+                } catch (err) {
+                    remainingQueue.push(item);
+                }
+            }
+
+            saveOfflineQueue(remainingQueue);
+            if (remainingQueue.length === 0) {
+                offlineIndicator.classList.add('hidden');
+                showToast('Semua data offline berhasil disinkronkan!');
+            }
+        }
+
+        window.addEventListener('online', () => {
+            offlineIndicator.classList.add('hidden');
+            processOfflineQueue();
+            loadDataFromSheets();
+        });
+
+        window.addEventListener('offline', () => {
+            offlineIndicator.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i><span>Mode Offline - Data tersimpan di HP, sinkron otomatis saat online</span>`;
+            offlineIndicator.classList.remove('hidden');
+        });
+
         async function loadDataFromSheets() {
+            if (!navigator.onLine) {
+                offlineIndicator.classList.remove('hidden');
+                loadDataFromLocalCache();
+                return;
+            }
+
             if (!sheetUrl) return;
             try {
                 const response = await fetch(sheetUrl);
@@ -534,11 +598,14 @@
                 try {
                     rows = JSON.parse(textData);
                 } catch (e) {
-                    console.error("Format balasan bukan JSON:", textData);
+                    loadDataFromLocalCache();
                     return;
                 }
                 
-                if (!Array.isArray(rows)) return;
+                if (!Array.isArray(rows)) {
+                    loadDataFromLocalCache();
+                    return;
+                }
                 
                 let tempMap = {};
                 
@@ -585,16 +652,26 @@
                 });
                 
                 students = Object.values(tempMap);
+                localStorage.setItem('tabungan_local_cache', JSON.stringify(students));
                 renderDashboard();
                 if (currentStudentId) renderStudentDetail();
             } catch (error) {
-                console.error("Gagal mengambil data:", error);
+                loadDataFromLocalCache();
             }
         }
 
-        function sendToGoogleSheets(action, studentName, amount, type, note) {
-            if (!sheetUrl) return; 
+        function loadDataFromLocalCache() {
+            try {
+                const cached = localStorage.getItem('tabungan_local_cache');
+                if (cached) {
+                    students = JSON.parse(cached);
+                    renderDashboard();
+                    if (currentStudentId) renderStudentDetail();
+                }
+            } catch(e) {}
+        }
 
+        function sendToGoogleSheets(action, studentName, amount, type, note) {
             const dateObj = new Date();
             const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + dateObj.toLocaleTimeString('id-ID');
             
@@ -607,20 +684,30 @@
                 keterangan: note
             };
 
+            if (!navigator.onLine || !sheetUrl) {
+                let queue = getOfflineQueue();
+                queue.push(data);
+                saveOfflineQueue(queue);
+                offlineIndicator.classList.remove('hidden');
+                return;
+            }
+
             fetch(sheetUrl, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(data)
             }).then(() => {}).catch(e => {
-                console.error("Gagal sinkronisasi Sheets:", e);
+                let queue = getOfflineQueue();
+                queue.push(data);
+                saveOfflineQueue(queue);
+                offlineIndicator.classList.remove('hidden');
             });
         }
 
         function renderDashboard() {
             const totalClass = students.reduce((sum, student) => sum + student.balance, 0);
             
-            // Jalankan animasi hitung untuk total saldo keseluruhan kelas
             animateValue(totalSchoolBalanceEl, previousTotalBalance, totalClass, 600);
             previousTotalBalance = totalClass;
 
@@ -680,7 +767,6 @@
                     `;
                     listStudentsEl.appendChild(li);
 
-                    // Jalankan animasi untuk saldo masing-masing anak
                     const prevBal = previousStudentBalances[student.id] || 0;
                     const el = document.getElementById(balanceId);
                     if(el) {
@@ -732,7 +818,6 @@
 
             detailStudentNameEl.innerText = student.name;
             
-            // Animasi hitung saldo detail murid
             const oldDetailVal = previousStudentBalances[student.id + '_detail'] || 0;
             animateValue(detailStudentBalanceEl, oldDetailVal, student.balance, 500);
             previousStudentBalances[student.id + '_detail'] = student.balance;
@@ -804,6 +889,7 @@
 
             const newStudent = { id: safeId, name: name, balance: 0, history: [] };
             students.push(newStudent);
+            localStorage.setItem('tabungan_local_cache', JSON.stringify(students));
             searchQuery = "";
             inputSearchStudent.value = "";
             
@@ -831,6 +917,7 @@
             
             student.history.push({ id: 'trans_local_' + Date.now(), type: type, amount: amount, note: note, date: 'Baru saja', isKoreksi: false });
             student.balance += (type === 'income' ? amount : -amount);
+            localStorage.setItem('tabungan_local_cache', JSON.stringify(students));
 
             renderStudentDetail(); 
             inputTransAmount.value = ''; inputTransNote.value = '';
@@ -851,6 +938,7 @@
             student.balance += (trans.type === 'income' ? -trans.amount : trans.amount);
             trans.isKoreksi = true;
             trans.note = "[Dibatalkan] " + trans.note;
+            localStorage.setItem('tabungan_local_cache', JSON.stringify(students));
             
             renderStudentDetail();
             showToast('Catatan dibatalkan.');
@@ -888,6 +976,7 @@
             
             student.history.push({ id: 'trans_local_' + Date.now(), type: 'income', amount: amount, note: 'Nabung Harian', date: 'Baru saja', isKoreksi: false });
             student.balance += amount;
+            localStorage.setItem('tabungan_local_cache', JSON.stringify(students));
             renderDashboard();
             closeQuickAddModal();
             showToast(`Tabungan ${student.name} tersimpan!`);
@@ -945,6 +1034,7 @@
             
             if(student) {
                 students = students.filter(s => s.id !== idToDelete);
+                localStorage.setItem('tabungan_local_cache', JSON.stringify(students));
                 renderDashboard(); 
                 closeDeleteConfirmModal(); 
                 showToast('Murid dihapus.');
@@ -967,6 +1057,7 @@
         formSheetSettings.addEventListener('submit', (e) => {
             e.preventDefault();
             sheetUrl = inputSheetUrl.value.trim();
+            localStorage.setItem('tabungan_sheet_url', sheetUrl);
             closeSheetSettingsModal(); 
             showToast('Tautan Sheets permanen!');
         });
@@ -974,9 +1065,18 @@
         function init() {
             displayAdminName.innerText = adminName;
             displaySchoolName.innerText = schoolName === "" ? "Beri Nama Sekolah..." : schoolName;
+            let savedSheetUrl = localStorage.getItem('tabungan_sheet_url');
+            if (savedSheetUrl) sheetUrl = savedSheetUrl;
             changeTheme(currentTheme);
-            renderDashboard();
-            loadDataFromSheets();
+
+            if (!navigator.onLine) {
+                offlineIndicator.classList.remove('hidden');
+                loadDataFromLocalCache();
+            } else {
+                loadDataFromLocalCache();
+                loadDataFromSheets();
+                processOfflineQueue();
+            }
         }
 
         init();
