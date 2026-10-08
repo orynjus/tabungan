@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabungan Bu Rini</title>
+    <title>Tabungan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -89,7 +89,6 @@
             background-size: 30px 30px;
             transition: background-color 0.5s ease;
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--theme-200); border-radius: 8px; }
@@ -100,7 +99,6 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Hide number input arrows */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; margin: 0; 
@@ -114,10 +112,10 @@
         <!-- VIEW 1: ADMIN DASHBOARD -->
         <div id="viewDashboard" class="flex flex-col h-full fade-in">
             <!-- Header Guru -->
-            <div id="headerBackground" class="bg-gradient-to-br from-pink-400 to-rose-500 text-white p-6 pb-8 rounded-b-[2.5rem] shadow-md z-10 relative transition-colors duration-500">
+            <div id="headerBackground" class="bg-gradient-to-br from-theme-400 to-theme-600 text-white p-6 pb-8 rounded-b-[2.5rem] shadow-md z-10 relative transition-colors duration-500">
                 <div class="flex justify-between items-center mb-2">
                     <h1 class="text-xl font-extrabold tracking-wide flex items-center cursor-pointer group" onclick="openProfileModal()" title="Ubah Profil">
-                        <i class="fa-solid fa-chalkboard-user mr-3 theme-text-light"></i> 
+                        <i class="fa-solid fa-chalkboard-user mr-3 text-theme-100 transition-colors"></i> 
                         <span id="displayAdminName">Dasbor Guru</span>
                         <i class="fa-solid fa-pen text-xs ml-2 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </h1>
@@ -131,7 +129,7 @@
                     </div>
                 </div>
                 <div class="cursor-pointer group inline-flex items-center mb-4" onclick="openProfileModal()" title="Ubah Nama Sekolah">
-                    <p id="displaySchoolName" class="theme-text-light text-sm font-semibold">TK Kridosiwi Talun</p>
+                    <p id="displaySchoolName" class="text-theme-100 transition-colors text-sm font-semibold">TK Kridosiwi Talun</p>
                     <i class="fa-solid fa-pen text-[10px] ml-2 text-white/70 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                 </div>
                 
@@ -158,11 +156,16 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-5 bg-white">
-                <h2 class="text-xs font-extrabold text-theme-500 uppercase tracking-wider mb-3 flex items-center">
-                    <i class="fa-solid fa-users mr-2"></i> Daftar Anak-anak
-                </h2>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xs font-extrabold text-theme-500 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-users mr-2"></i> Daftar Anak-anak
+                    </h2>
+                    <button onclick="loadDataFromSheets()" class="text-xs font-bold text-theme-600 hover:underline flex items-center" title="Muat Ulang Data Sheets">
+                        <i class="fa-solid fa-rotate mr-1"></i> Segarkan
+                    </button>
+                </div>
                 <ul id="listStudents" class="space-y-3">
-                    <!-- Student list will be injected here -->
+                    <!-- Student list injected dynamically -->
                 </ul>
                 <div id="emptyStudent" class="text-center py-10 hidden">
                     <div class="w-20 h-20 bg-theme-50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -173,10 +176,10 @@
             </div>
         </div>
 
-        <!-- VIEW 2: STUDENT DETAIL (TABUNGAN PER HARI) -->
+        <!-- VIEW 2: STUDENT DETAIL -->
         <div id="viewStudent" class="flex flex-col h-full fade-in hidden">
             <!-- Header Murid -->
-            <div class="bg-gradient-to-br from-theme-400 to-theme-600 text-white p-5 pb-6 rounded-b-[2.5rem] shadow-md z-10 relative transition-colors duration-500">
+            <div id="studentHeaderBackground" class="bg-gradient-to-br from-theme-400 to-theme-600 text-white p-5 pb-6 rounded-b-[2.5rem] shadow-md z-10 relative transition-colors duration-500">
                 <div class="flex items-center mb-4">
                     <button id="btnBack" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition mr-3 active:scale-95">
                         <i class="fa-solid fa-arrow-left text-white"></i>
@@ -210,7 +213,7 @@
                         <input type="number" id="inputTransAmount" placeholder="Nominal (Rp)" class="w-2/3 px-4 py-3 bg-white border-2 border-theme-100 rounded-2xl focus:outline-none focus:border-theme-400 font-bold text-sm transition-colors" required min="100">
                     </div>
                     <input type="text" id="inputTransNote" placeholder="Keterangan opsional (mis. Uang Jajan)" class="w-full px-4 py-3 bg-white border-2 border-theme-100 rounded-2xl focus:outline-none focus:border-theme-400 font-semibold text-sm placeholder-gray-400 transition-colors">
-                    <button type="submit" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 text-white font-black py-3 rounded-2xl hover:from-theme-600 hover:to-theme-700 transition shadow-lg text-sm active:scale-95 flex items-center justify-center">
+                    <button type="submit" id="btnSubmitTrans" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 text-white font-black py-3 rounded-2xl hover:from-theme-600 hover:to-theme-700 transition shadow-lg text-sm active:scale-95 flex items-center justify-center">
                         <i class="fa-solid fa-check-circle mr-2"></i> Simpan Catatan
                     </button>
                 </form>
@@ -222,7 +225,7 @@
                     <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat
                 </h2>
                 <ul id="listTransactions" class="space-y-3">
-                    <!-- Transactions will be injected here -->
+                    <!-- Transaction list injected dynamically -->
                 </ul>
                 <div id="emptyTransaction" class="text-center py-6 hidden">
                     <p class="text-gray-400 font-bold text-sm italic">Belum ada riwayat.</p>
@@ -252,7 +255,7 @@
             </div>
         </div>
 
-        <!-- Quick Add Modal (Nabung Cepat dari Dasbor) -->
+        <!-- Quick Add Modal -->
         <div id="quickAddModal" class="absolute inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
             <div class="bg-white w-10/12 max-w-sm rounded-[2rem] p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="quickAddModalContent">
                 <div class="flex justify-between items-center mb-2">
@@ -263,37 +266,42 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mb-5 font-bold">Simpan tabungan hari ini untuk <span id="qaStudentName" class="text-theme-500 text-sm transition-colors"></span></p>
+                <p class="text-xs text-gray-500 mb-4 font-bold">Simpan tabungan hari ini untuk <span id="qaStudentName" class="text-theme-500 text-sm transition-colors"></span></p>
                 
                 <form id="formQuickAdd" class="space-y-4">
-                    <button type="submit" class="w-full theme-btn-grad text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 flex items-center justify-center">
+                    <input type="hidden" id="qaStudentId">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nominal (Rp)</label>
+                        <input type="number" id="qaAmount" placeholder="Contoh: 5000" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 font-bold text-gray-700" required min="100">
+                    </div>
+                    <button type="submit" id="btnSubmitQuick" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 hover:from-theme-600 hover:to-theme-700 text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 flex items-center justify-center">
                         <i class="fa-solid fa-piggy-bank mr-2"></i> Simpan Tabungan
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- Modal Edit Profil (Nama Admin & Sekolah) -->
+        <!-- Modal Edit Profil -->
         <div id="profileModal" class="absolute inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
             <div class="bg-white w-10/12 max-w-sm rounded-[2rem] p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="profileModalContent">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-extrabold text-gray-800 text-lg flex items-center">
-                        <i class="fa-solid fa-user-pen theme-text mr-2"></i> Atur Profil
+                        <i class="fa-solid fa-user-pen text-theme-500 transition-colors mr-2"></i> Atur Profil
                     </h3>
-                    <button type="button" onclick="closeProfileModal()" class="text-gray-400 hover:text-rose-500 transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-50">
+                    <button type="button" onclick="closeProfileModal()" class="text-gray-400 hover:text-theme-500 transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-50">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <form id="formProfile" class="space-y-4">
                     <div>
                         <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Pengelola</label>
-                        <input type="text" id="inputAdminName" placeholder="Contoh: Bu Guru Ani" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-rose-400 font-bold text-gray-700" required>
+                        <input type="text" id="inputAdminName" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700" required>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Sekolah (Bisa Dikosongkan)</label>
-                        <input type="text" id="inputSchoolName" placeholder="Contoh: TK Kridosiwi" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-rose-400 font-bold text-gray-700">
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Sekolah</label>
+                        <input type="text" id="inputSchoolName" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700">
                     </div>
-                    <button type="submit" class="w-full theme-btn-grad text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 mt-2">
+                    <button type="submit" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 hover:from-theme-600 hover:to-theme-700 text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 mt-2">
                         Simpan Profil
                     </button>
                 </form>
@@ -326,11 +334,11 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mb-4 font-semibold">Tautan Google Apps Script sudah tertanam untuk integrasi rekap otomatis.</p>
+                <p class="text-xs text-gray-500 mb-4 font-semibold">URL Google Apps Script terhubung permanen untuk rekap realtime.</p>
                 <form id="formSheetSettings" class="space-y-4">
                     <input type="url" id="inputSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-theme-400 font-medium text-gray-700 text-xs transition-colors" required>
                     <button type="submit" class="w-full bg-gradient-to-r from-theme-400 to-theme-600 text-white font-black py-3 rounded-2xl hover:from-theme-500 hover:to-theme-700 transition shadow-lg text-sm active:scale-95">
-                        Simpan & Tautkan
+                        Simpan & Hubungkan
                     </button>
                 </form>
             </div>
@@ -344,32 +352,15 @@
 
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        
-        let db, auth;
-        let userId = null;
-
-        if (firebaseConfig) {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-        }
-        
-        // Data Structure
+    <script>
         let students = [];
         let currentStudentId = null;
-        let adminName = "Dasbor Guru";
-        let schoolName = "TK Kridosiwi Talun";
-        let sheetUrl = "https://script.google.com/macros/s/AKfycbwHr7IchMWkCwP2RUHHl6GjnW64KUnF7ZTU54hxfNA7IYxFV23mSEu7SztJIZUZ7tqx/exec"; // Ditambahkan secara permanen
+        let adminName = localStorage.getItem('tabungan_admin_name') || "Dasbor Guru";
+        let schoolName = localStorage.getItem('tabungan_school_name') || "TK Kridosiwi Talun";
+        let sheetUrl = localStorage.getItem('tabungan_sheet_url') || "https://script.google.com/macros/s/AKfycbwHr7IchMWkCwP2RUHHl6GjnW64KUnF7ZTU54hxfNA7IYxFV23mSEu7SztJIZUZ7tqx/exec"; 
         let studentToDelete = null;
         let searchQuery = "";
-        let currentTheme = 'pink';
+        let currentTheme = localStorage.getItem('tabungan_theme') || 'pink';
 
         // DOM Elements
         const viewDashboard = document.getElementById('viewDashboard');
@@ -417,7 +408,6 @@
         const toastMsg = document.getElementById('toastMsg');
         const toastIcon = document.getElementById('toastIcon');
 
-        // Utils
         function formatRupiah(number) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
         }
@@ -437,15 +427,13 @@
             }, 3000);
         }
 
-        function generateId() {
-            return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        function createSafeId(name) {
+            return 'stu_' + btoa(unescape(encodeURIComponent(name))).replace(/[^a-zA-Z0-9]/g, '');
         }
 
         window.openThemeModal = function() {
             themeModal.classList.remove('hidden');
-            setTimeout(() => {
-                themeModal.classList.remove('opacity-0'); themeModalContent.classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { themeModal.classList.remove('opacity-0'); themeModalContent.classList.remove('scale-95'); }, 10);
         }
 
         window.closeThemeModal = function() {
@@ -453,64 +441,118 @@
             setTimeout(() => { themeModal.classList.add('hidden'); }, 300);
         }
 
-        window.changeTheme = async function(themeName) {
-            // Update Body Classes
+        window.changeTheme = function(themeName) {
             document.body.classList.remove('theme-blue', 'theme-green', 'theme-purple', 'theme-orange');
-            if (themeName !== 'pink') {
-                document.body.classList.add(`theme-${themeName}`);
+            if (themeName !== 'pink') document.body.classList.add(`theme-${themeName}`);
+            
+            const headerBg = document.getElementById('headerBackground');
+            if(headerBg) {
+                headerBg.className = `bg-gradient-to-br p-6 pb-8 rounded-b-[2.5rem] shadow-md z-10 relative transition-colors duration-500 text-white ` + 
+                (themeName === 'pink' ? 'from-pink-400 to-rose-600' : 
+                 themeName === 'blue' ? 'from-blue-400 to-blue-600' :
+                 themeName === 'green' ? 'from-green-400 to-green-600' :
+                 themeName === 'purple' ? 'from-purple-400 to-purple-600' :
+                 'from-orange-400 to-orange-600');
             }
+
+            const studentHeaderBg = document.getElementById('studentHeaderBackground');
+            if(studentHeaderBg) {
+                studentHeaderBg.className = `bg-gradient-to-br p-5 pb-6 rounded-b-[2.5rem] shadow-md z-10 relative transition-colors duration-500 text-white ` + 
+                (themeName === 'pink' ? 'from-pink-400 to-rose-600' : 
+                 themeName === 'blue' ? 'from-blue-400 to-blue-600' :
+                 themeName === 'green' ? 'from-green-400 to-green-600' :
+                 themeName === 'purple' ? 'from-purple-400 to-purple-600' :
+                 'from-orange-400 to-orange-600');
+            }
+
             currentTheme = themeName;
             
-            // Update UI Selected Rings
             ['pink', 'blue', 'green', 'purple', 'orange'].forEach(t => {
                 const btn = document.getElementById(`btn-theme-${t}`);
                 if (btn) {
                     if (t === themeName) {
-                        btn.classList.remove('ring-transparent');
-                        btn.classList.add('ring-gray-400');
+                        btn.classList.remove('ring-transparent'); btn.classList.add('ring-gray-400');
                     } else {
-                        btn.classList.remove('ring-gray-400');
-                        btn.classList.add('ring-transparent');
+                        btn.classList.remove('ring-gray-400'); btn.classList.add('ring-transparent');
                     }
                 }
             });
 
-            // Save to DB or Local
-            if (userId && db) {
+            localStorage.setItem('tabungan_theme', themeName);
+        }
+
+        async function loadDataFromSheets() {
+            if (!sheetUrl) return;
+            showToast("Loading", "success");
+            try {
+                const response = await fetch(sheetUrl);
+                const textData = await response.text(); 
+                
+                let rows;
                 try {
-                    await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'settings', 'profile'), { theme: themeName }, { merge: true });
-                } catch(e) { console.error(e); }
-            } else {
-                localStorage.setItem('tabungan_kridosiwi_theme', themeName);
+                    rows = JSON.parse(textData);
+                } catch (e) {
+                    console.error("Format balasan bukan JSON:", textData);
+                    throw new Error("Pastikan Web App disetel ke 'Anyone' (Siapa saja).");
+                }
+                
+                if (!Array.isArray(rows)) {
+                    throw new Error("Data sheets tidak valid.");
+                }
+                
+                let tempMap = {};
+                
+                rows.forEach((row, index) => {
+                    if (index === 0 && (row[0] === "waktu" || row[0] === "Waktu")) return;
+                    
+                    let waktu = row[0];
+                    let aksi = row[1];
+                    let nama = row[2];
+                    let jenis = row[3];
+                    let nominal = parseFloat(row[4]) || 0;
+                    let keterangan = row[5];
+                    
+                    if (!nama) return;
+                    
+                    let safeId = createSafeId(nama);
+                    
+                    if (aksi === "Hapus Murid") {
+                        delete tempMap[nama];
+                        return;
+                    }
+                    
+                    if (!tempMap[nama]) {
+                        tempMap[nama] = { id: safeId, name: nama, balance: 0, history: [] };
+                    }
+                    
+                    if (aksi === "Transaksi" || aksi === "Koreksi" || aksi === "Murid Baru") {
+                        if (aksi === "Transaksi" || aksi === "Koreksi") {
+                            let sign = (jenis === "Nabung") ? 1 : -1;
+                            if (aksi === "Koreksi") sign = sign * -1;
+                            
+                            tempMap[nama].history.push({
+                                id: 'trans_' + index, 
+                                type: jenis === "Nabung" ? "income" : "expense",
+                                amount: nominal,
+                                note: aksi === "Koreksi" ? "[Dibatalkan] " + keterangan : keterangan,
+                                date: waktu,
+                                isKoreksi: aksi === "Koreksi"
+                            });
+                            
+                            tempMap[nama].balance += (nominal * sign);
+                        }
+                    }
+                });
+                
+                students = Object.values(tempMap);
+                renderDashboard();
+                if (currentStudentId) renderStudentDetail();
+                
+                showToast("Tunggu", "success");
+            } catch (error) {
+                console.error(error);
+                showToast("Gagal mengambil data dari Google Sheets", "error");
             }
-        }
-
-        async function saveStudentToDB(student) {
-            if (!userId || !db) return;
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'students', student.id), student);
-            } catch(e) { console.error(e); showToast("Gagal menyimpan ke server", "error"); }
-        }
-
-        async function deleteStudentFromDB(studentId) {
-            if (!userId || !db) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'students', studentId));
-            } catch(e) { console.error(e); }
-        }
-
-        async function saveProfileToDB(name, school) {
-             if (!userId || !db) return;
-             try {
-                 await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'settings', 'profile'), { adminName: name, schoolName: school }, { merge: true });
-             } catch(e) { console.error(e); }
-        }
-
-        async function saveSheetUrlToDB(url) {
-             if (!userId || !db) return;
-             try {
-                 await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'settings', 'profile'), { sheetUrl: url }, { merge: true });
-             } catch(e) { console.error(e); }
         }
 
         function sendToGoogleSheets(action, studentName, amount, type, note) {
@@ -530,10 +572,14 @@
 
             fetch(sheetUrl, {
                 method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(data)
-            }).catch(e => console.error("Gagal mengirim ke Sheets:", e));
+            }).then(() => {
+                console.log("Sinkronisasi latar belakang terkirim.");
+            }).catch(e => {
+                console.error("Gagal sinkronisasi Sheets:", e);
+            });
         }
 
         function renderDashboard() {
@@ -567,19 +613,19 @@
                     const li = document.createElement('li');
                     li.className = 'bg-white border-2 border-gray-50 rounded-2xl p-3 flex items-center justify-between hover:border-gray-200 hover:shadow-md transition group';
                     const isMinus = student.balance < 0;
-                    const balanceColor = isMinus ? 'text-rose-500' : 'theme-text-dark';
+                    const balanceColor = isMinus ? 'text-rose-500' : 'text-gray-800';
                     const number = index + 1;
 
                     li.innerHTML = `
                         <div class="flex items-center space-x-3 cursor-pointer flex-1 overflow-hidden" onclick="openStudentDetail('${student.id}')">
-                            <span class="text-sm font-extrabold text-gray-400 w-5 text-right flex-shrink-0">${number}.</span>
+                            <span class="text-sm font-extrabold text-gray-400 w-6 text-right flex-shrink-0">${number}.</span>
                             <div class="flex-1 min-w-0 pr-2">
                                 <h3 class="font-extrabold text-gray-800 text-base group-hover:text-theme-500 transition leading-tight truncate">${student.name}</h3>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 flex-shrink-0">
-                            <div class="text-right cursor-pointer mr-2" onclick="openStudentDetail('${student.id}')">
-                                <p class="text-[9px] text-gray-400 font-black uppercase tracking-wider mb-0.5">Total Saldo</p>
+                            <div class="text-right cursor-pointer mr-1" onclick="openStudentDetail('${student.id}')">
+                                <p class="text-[9px] text-gray-400 font-black uppercase tracking-wider mb-0.5">Saldo</p>
                                 <p class="font-black ${balanceColor} text-sm">${formatRupiah(student.balance)}</p>
                             </div>
                             <button type="button" onclick="openQuickAddModal('${student.id}', event)" class="w-9 h-9 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition shadow-sm active:scale-95 z-10 relative flex-shrink-0" title="Nabung Cepat">
@@ -628,17 +674,19 @@
                 emptyTransactionEl.classList.remove('hidden');
             } else {
                 emptyTransactionEl.classList.add('hidden');
-                const sortedHistory = [...student.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                const sortedHistory = [...student.history].reverse();
 
                 sortedHistory.forEach(trans => {
                     const li = document.createElement('li');
                     li.className = 'flex items-center justify-between p-3 rounded-2xl border-2 border-theme-50 bg-white group mb-2 hover:border-theme-200 transition';
                     const isIncome = trans.type === 'income';
-                    const iconClass = isIncome ? 'fa-arrow-down text-emerald-500 bg-emerald-100' : 'fa-arrow-up text-rose-500 bg-rose-100'; // Semantic Action Colors
+                    const isKoreksi = trans.isKoreksi;
+                    
+                    const iconClass = isKoreksi ? 'fa-ban text-gray-400 bg-gray-100' : (isIncome ? 'fa-arrow-down text-emerald-500 bg-emerald-100' : 'fa-arrow-up text-rose-500 bg-rose-100');
                     const sign = isIncome ? '+' : '-';
-                    const amountClass = isIncome ? 'text-emerald-600' : 'text-rose-600';
-                    const dateObj = new Date(trans.date);
-                    const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const amountClass = isKoreksi ? 'text-gray-400 line-through' : (isIncome ? 'text-emerald-600' : 'text-rose-600');
+                    const dateStr = trans.date;
                     const noteText = trans.note ? trans.note : (isIncome ? 'Nabung' : 'Ambil');
 
                     li.innerHTML = `
@@ -653,9 +701,7 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="font-extrabold ${amountClass} text-sm">${sign} ${formatRupiah(trans.amount).replace('Rp', '')}</span>
-                            <button onclick="deleteTransaction('${trans.id}')" class="w-7 h-7 flex items-center justify-center rounded-full bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white transition opacity-0 group-hover:opacity-100 focus:opacity-100">
-                                <i class="fa-solid fa-xmark text-xs"></i>
-                            </button>
+                            ${!isKoreksi ? `<button onclick="deleteTransaction('${trans.id}')" class="w-7 h-7 flex items-center justify-center rounded-full bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white transition opacity-0 group-hover:opacity-100 focus:opacity-100" title="Batal Transaksi"><i class="fa-solid fa-xmark text-xs"></i></button>` : ''}
                         </div>
                     `;
                     listTransactionsEl.appendChild(li);
@@ -668,12 +714,18 @@
             renderDashboard();
         });
 
-        formAddStudent.addEventListener('submit', async (e) => {
+        formAddStudent.addEventListener('submit', (e) => {
             e.preventDefault();
             const name = inputStudentName.value.trim();
             if (!name) return;
 
-            const newStudent = { id: generateId(), name: name, balance: 0, history: [] };
+            const safeId = createSafeId(name);
+            if(students.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+                showToast('Nama murid sudah ada!', 'error');
+                return;
+            }
+
+            const newStudent = { id: safeId, name: name, balance: 0, history: [] };
             students.push(newStudent);
             searchQuery = "";
             inputSearchStudent.value = "";
@@ -682,11 +734,10 @@
             inputStudentName.value = '';
             showToast(`${name} berhasil ditambahkan!`);
             
-            await saveStudentToDB(newStudent);
             sendToGoogleSheets("Murid Baru", name, 0, "-", "Menambahkan murid ke sistem");
         });
 
-        formTransaction.addEventListener('submit', async (e) => {
+        formTransaction.addEventListener('submit', (e) => {
             e.preventDefault();
             const studentIndex = students.findIndex(s => s.id === currentStudentId);
             if (studentIndex === -1) return;
@@ -699,48 +750,48 @@
                 showToast('Nominal tidak valid!', 'error'); return;
             }
 
-            const newTrans = { id: generateId(), type: type, amount: amount, note: note, date: new Date().toISOString() };
             const student = students[studentIndex];
-            student.history.push(newTrans);
+            
+            student.history.push({ id: 'trans_local_' + Date.now(), type: type, amount: amount, note: note, date: 'Baru saja', isKoreksi: false });
             student.balance += (type === 'income' ? amount : -amount);
 
             renderStudentDetail(); 
             inputTransAmount.value = ''; inputTransNote.value = '';
             showToast('Catatan tersimpan!');
 
-            await saveStudentToDB(student);
             const typeIndo = type === 'income' ? 'Nabung' : 'Ambil';
             sendToGoogleSheets("Transaksi", student.name, amount, typeIndo, note || typeIndo);
         });
 
-        window.deleteTransaction = async function(transId) {
+        window.deleteTransaction = function(transId) {
             const studentIndex = students.findIndex(s => s.id === currentStudentId);
             if (studentIndex === -1) return;
 
             const student = students[studentIndex];
-            const transIndex = student.history.findIndex(t => t.id === transId);
-            if (transIndex === -1) return;
+            const trans = student.history.find(t => t.id === transId);
+            if (!trans || trans.isKoreksi) return;
             
-            const trans = student.history[transIndex];
             student.balance += (trans.type === 'income' ? -trans.amount : trans.amount);
-            student.history.splice(transIndex, 1);
+            trans.isKoreksi = true;
+            trans.note = "[Dibatalkan] " + trans.note;
             
             renderStudentDetail();
-            showToast('Catatan dihapus.');
+            showToast('Catatan dibatalkan.');
 
-            await saveStudentToDB(student);
+            const typeIndo = trans.type === 'income' ? 'Nabung' : 'Ambil';
+            sendToGoogleSheets("Koreksi", student.name, trans.amount, typeIndo, "Batal: " + trans.note.replace('[Dibatalkan] ', ''));
         }
 
         window.openQuickAddModal = function(studentId, event) {
             event.stopPropagation(); 
             const student = students.find(s => s.id === studentId);
             if (!student) return;
-            qaStudentId.value = student.id; qaStudentName.innerText = student.name; qaAmount.value = '';
+            qaStudentId.value = student.id; 
+            qaStudentName.innerText = student.name; 
+            qaAmount.value = '';
             
             quickAddModal.classList.remove('hidden');
-            setTimeout(() => {
-                quickAddModal.classList.remove('opacity-0'); quickAddModalContent.classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { quickAddModal.classList.remove('opacity-0'); quickAddModalContent.classList.remove('scale-95'); }, 10);
         }
 
         window.closeQuickAddModal = function() {
@@ -748,16 +799,22 @@
             setTimeout(() => { quickAddModal.classList.add('hidden'); }, 300);
         }
 
-        formQuickAdd.addEventListener('submit', async (e) => {
+        formQuickAdd.addEventListener('submit', (e) => {
             e.preventDefault();
             const studentId = qaStudentId.value;
             const amount = parseFloat(qaAmount.value);
             const studentIndex = students.findIndex(s => s.id === studentId);
             
             if (studentIndex === -1 || isNaN(amount) || amount <= 0) return;
+            
+            const student = students[studentIndex];
+            
+            student.history.push({ id: 'trans_local_' + Date.now(), type: 'income', amount: amount, note: 'Nabung Harian', date: 'Baru saja', isKoreksi: false });
+            student.balance += amount;
+            renderDashboard();
+            closeQuickAddModal();
+            showToast(`Tabungan ${student.name} tersimpan!`);
 
-            const newTrans = { id: generateId(), type: 'income', amount: amount, note: 'Nabung Harian', date: new Date().toISOString() };
-            // Kirim transaksi Nabung Cepat ke Google Sheets
             sendToGoogleSheets("Transaksi", student.name, amount, "Nabung", "Nabung Harian (Cepat)");
         });
 
@@ -765,10 +822,7 @@
             inputAdminName.value = adminName === "Dasbor Guru" ? "" : adminName;
             inputSchoolName.value = schoolName;
             profileModal.classList.remove('hidden');
-            setTimeout(() => {
-                profileModal.classList.remove('opacity-0'); profileModalContent.classList.remove('scale-95');
-                inputAdminName.focus();
-            }, 10);
+            setTimeout(() => { profileModal.classList.remove('opacity-0'); profileModalContent.classList.remove('scale-95'); inputAdminName.focus(); }, 10);
         }
 
         window.closeProfileModal = function() {
@@ -776,7 +830,7 @@
             setTimeout(() => { profileModal.classList.add('hidden'); }, 300);
         }
 
-        formProfile.addEventListener('submit', async (e) => {
+        formProfile.addEventListener('submit', (e) => {
             e.preventDefault();
             const newName = inputAdminName.value.trim();
             const newSchool = inputSchoolName.value.trim();
@@ -784,22 +838,22 @@
             if (newName) {
                 adminName = newName; 
                 displayAdminName.innerText = adminName;
+                localStorage.setItem('tabungan_admin_name', adminName);
             }
             
             schoolName = newSchool;
-            displaySchoolName.innerText = schoolName === "" ? "" : schoolName;
+            displaySchoolName.innerText = schoolName === "" ? "Beri Nama Sekolah..." : schoolName;
+            localStorage.setItem('tabungan_school_name', schoolName);
             
             closeProfileModal(); showToast('Profil diperbarui!');
-            await saveProfileToDB(adminName, schoolName);
         });
 
         window.confirmDeleteStudent = function(studentId, studentName, event) {
             event.stopPropagation();
-            studentToDelete = studentId; deleteStudentName.innerText = studentName;
+            studentToDelete = studentId; 
+            deleteStudentName.innerText = studentName;
             deleteConfirmModal.classList.remove('hidden');
-            setTimeout(() => {
-                deleteConfirmModal.classList.remove('opacity-0'); deleteConfirmModalContent.classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { deleteConfirmModal.classList.remove('opacity-0'); deleteConfirmModalContent.classList.remove('scale-95'); }, 10);
         }
 
         window.closeDeleteConfirmModal = function() {
@@ -807,22 +861,25 @@
             setTimeout(() => { deleteConfirmModal.classList.add('hidden'); studentToDelete = null; }, 300);
         }
 
-        window.executeDeleteStudent = async function() {
+        window.executeDeleteStudent = function() {
             if (!studentToDelete) return;
             const idToDelete = studentToDelete;
+            const student = students.find(s => s.id === idToDelete);
             
-            students = students.filter(s => s.id !== idToDelete);
-            renderDashboard(); closeDeleteConfirmModal(); showToast('Data dihapus.');
-            
-            await deleteStudentFromDB(idToDelete);
+            if(student) {
+                students = students.filter(s => s.id !== idToDelete);
+                renderDashboard(); 
+                closeDeleteConfirmModal(); 
+                showToast('Murid dihapus.');
+                
+                sendToGoogleSheets("Hapus Murid", student.name, 0, "-", "Menghapus murid dari aplikasi");
+            }
         }
 
         window.openSheetSettingsModal = function() {
             inputSheetUrl.value = sheetUrl;
             sheetSettingsModal.classList.remove('hidden');
-            setTimeout(() => {
-                sheetSettingsModal.classList.remove('opacity-0'); sheetSettingsModalContent.classList.remove('scale-95');
-            }, 10);
+            setTimeout(() => { sheetSettingsModal.classList.remove('opacity-0'); sheetSettingsModalContent.classList.remove('scale-95'); }, 10);
         }
 
         window.closeSheetSettingsModal = function() {
@@ -830,108 +887,22 @@
             setTimeout(() => { sheetSettingsModal.classList.add('hidden'); }, 300);
         }
 
-        formSheetSettings.addEventListener('submit', async (e) => {
+        formSheetSettings.addEventListener('submit', (e) => {
             e.preventDefault();
             const newUrl = inputSheetUrl.value.trim();
             sheetUrl = newUrl;
+            localStorage.setItem('tabungan_sheet_url', sheetUrl);
             closeSheetSettingsModal(); 
-            showToast('Tautan Google Sheets berhasil diamankan!');
-            await saveSheetUrlToDB(sheetUrl);
+            showToast('Tautan Sheets diperbarui!');
+            loadDataFromSheets();
         });
 
-        async function migrateLocalData() {
-            let migrated = false;
-            const savedData = localStorage.getItem('tabungan_kridosiwi_kelas');
-            if (savedData) {
-                try {
-                    const localStudents = JSON.parse(savedData);
-                    for (const student of localStudents) { await saveStudentToDB(student); }
-                    localStorage.removeItem('tabungan_kridosiwi_kelas'); migrated = true;
-                } catch (e) {}
-            }
-            
-            const savedAdminName = localStorage.getItem('admin_name_kridosiwi');
-            if (savedAdminName) {
-                await saveAdminNameToDB(savedAdminName);
-                localStorage.removeItem('admin_name_kridosiwi'); migrated = true;
-            }
-            
-            const savedTheme = localStorage.getItem('tabungan_kridosiwi_theme');
-            if (savedTheme) {
-                await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'settings', 'profile'), { theme: savedTheme }, { merge: true });
-                localStorage.removeItem('tabungan_kridosiwi_theme');
-            }
-
-            if(migrated) { showToast("Data lokal berhasil diselamatkan ke Online!"); }
-        }
-
-        function setupRealtimeListeners() {
-            if (!userId || !db) return;
-
-            // Memantau perubahan Nama Guru dan Link Sheets
-            const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'profile');
-            onSnapshot(settingsRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if(data.adminName) {
-                        adminName = data.adminName;
-                        displayAdminName.innerText = adminName;
-                    }
-                    if(data.schoolName !== undefined) {
-                        schoolName = data.schoolName;
-                        displaySchoolName.innerText = schoolName === "" ? "Beri Nama Sekolah..." : schoolName;
-                    }
-                    if(data.sheetUrl) {
-                        sheetUrl = data.sheetUrl;
-                    }
-                }
-            }, (error) => console.error(error));
-
-            // Memantau perubahan Tabungan Anak
-            const studentsRef = collection(db, 'artifacts', appId, 'users', userId, 'students');
-            onSnapshot(studentsRef, (snapshot) => {
-                const updatedStudents = [];
-                snapshot.forEach((docSnap) => {
-                    updatedStudents.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                
-                students = updatedStudents;
-                renderDashboard();
-                if (currentStudentId) { renderStudentDetail(); }
-            }, (error) => {
-                console.error(error); showToast("Gagal sinkronisasi data", "error");
-            });
-        }
-
-        async function init() {
-            // Apply initial theme state immediately (ring highlight)
-            changeTheme('pink'); 
-
-            if (!auth) {
-                showToast("Berjalan dalam mode Offline", "error");
-                renderDashboard(); return;
-            }
-
-            showToast("Menghubungkan ke Cloud...", "success");
-
-            try {
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        await migrateLocalData();
-                        setupRealtimeListeners();
-                    }
-                });
-            } catch (error) {
-                console.error("Auth Error:", error);
-                showToast("Gagal terhubung ke Cloud", "error");
-            }
+        function init() {
+            displayAdminName.innerText = adminName;
+            displaySchoolName.innerText = schoolName === "" ? "Beri Nama Sekolah..." : schoolName;
+            changeTheme(currentTheme);
+            renderDashboard();
+            loadDataFromSheets();
         }
 
         init();
