@@ -99,6 +99,20 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Transisi lembut kemunculan item daftar data */
+        .item-transition {
+            animation: itemSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        @keyframes itemSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; margin: 0; 
@@ -295,11 +309,11 @@
                 <form id="formProfile" class="space-y-4">
                     <div>
                         <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Pengelola</label>
-                        <input type="text" id="inputAdminName" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700" required>
+                        <input type="text" id="inputAdminName" placeholder="Contoh: Bu Guru Ani" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700" required>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Sekolah</label>
-                        <input type="text" id="inputSchoolName" placeholder="" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700">
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Sekolah (Bisa Dikosongkan)</label>
+                        <input type="text" id="inputSchoolName" placeholder="Contoh: TK Kridosiwi" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-theme-400 transition-colors font-bold text-gray-700">
                     </div>
                     <button type="submit" class="w-full bg-gradient-to-r from-theme-500 to-theme-600 hover:from-theme-600 hover:to-theme-700 text-white font-black py-3 rounded-2xl transition shadow-lg text-sm active:scale-95 mt-2">
                         Simpan Profil
@@ -357,7 +371,7 @@
         let currentStudentId = null;
         let adminName = localStorage.getItem('tabungan_admin_name') || "Dasbor Guru";
         let schoolName = localStorage.getItem('tabungan_school_name') || "TK Kridosiwi Talun";
-        let sheetUrl = localStorage.getItem('tabungan_sheet_url') || "https://script.google.com/macros/s/AKfycbwHr7IchMWkCwP2RUHHl6GjnW64KUnF7ZTU54hxfNA7IYxFV23mSEu7SztJIZUZ7tqx/exec"; 
+        let sheetUrl = "https://script.google.com/macros/s/AKfycbwHr7IchMWkCwP2RUHHl6GjnW64KUnF7ZTU54hxfNA7IYxFV23mSEu7SztJIZUZ7tqx/exec"; 
         let studentToDelete = null;
         let searchQuery = "";
         let currentTheme = localStorage.getItem('tabungan_theme') || 'pink';
@@ -483,7 +497,6 @@
 
         async function loadDataFromSheets() {
             if (!sheetUrl) return;
-            showToast("Loading", "success");
             try {
                 const response = await fetch(sheetUrl);
                 const textData = await response.text(); 
@@ -493,12 +506,10 @@
                     rows = JSON.parse(textData);
                 } catch (e) {
                     console.error("Format balasan bukan JSON:", textData);
-                    throw new Error("Pastikan Web App disetel ke 'Anyone' (Siapa saja).");
+                    return;
                 }
                 
-                if (!Array.isArray(rows)) {
-                    throw new Error("Data sheets tidak valid.");
-                }
+                if (!Array.isArray(rows)) return;
                 
                 let tempMap = {};
                 
@@ -547,11 +558,8 @@
                 students = Object.values(tempMap);
                 renderDashboard();
                 if (currentStudentId) renderStudentDetail();
-                
-                showToast("Tunggu", "success");
             } catch (error) {
-                console.error(error);
-                showToast("Gagal mengambil data dari Google Sheets", "error");
+                console.error("Gagal mengambil data:", error);
             }
         }
 
@@ -575,9 +583,7 @@
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(data)
-            }).then(() => {
-                console.log("Sinkronisasi latar belakang terkirim.");
-            }).catch(e => {
+            }).then(() => {}).catch(e => {
                 console.error("Gagal sinkronisasi Sheets:", e);
             });
         }
@@ -611,7 +617,9 @@
 
                 filteredStudents.forEach((student, index) => {
                     const li = document.createElement('li');
-                    li.className = 'bg-white border-2 border-gray-50 rounded-2xl p-3 flex items-center justify-between hover:border-gray-200 hover:shadow-md transition group';
+                    li.className = 'bg-white border-2 border-gray-50 rounded-2xl p-3 flex items-center justify-between hover:border-gray-200 hover:shadow-md transition group item-transition';
+                    li.style.animationDelay = (index * 0.05) + 's'; // Efek bertahap / staggered
+                    
                     const isMinus = student.balance < 0;
                     const balanceColor = isMinus ? 'text-rose-500' : 'text-gray-800';
                     const number = index + 1;
@@ -648,12 +656,34 @@
             viewStudent.classList.remove('hidden');
         }
 
-        btnBack.addEventListener('click', () => {
+        function returnToDashboard() {
             currentStudentId = null;
             viewStudent.classList.add('hidden');
             viewDashboard.classList.remove('hidden');
             renderDashboard(); 
-        });
+        }
+
+        btnBack.addEventListener('click', returnToDashboard);
+
+        // Fitur Usap Layar (Swipe from Left to Right) untuk Kembali ke Halaman Dashboard
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        viewStudent.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        viewStudent.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipeGesture();
+        }, {passive: true});
+
+        function handleSwipeGesture() {
+            // Jika usapan dari kiri ke kanan melampaui 70 piksel
+            if (touchEndX - touchStartX > 70) {
+                returnToDashboard();
+            }
+        }
 
         function renderStudentDetail() {
             const student = students.find(s => s.id === currentStudentId);
@@ -677,9 +707,11 @@
                 
                 const sortedHistory = [...student.history].reverse();
 
-                sortedHistory.forEach(trans => {
+                sortedHistory.forEach((trans, index) => {
                     const li = document.createElement('li');
-                    li.className = 'flex items-center justify-between p-3 rounded-2xl border-2 border-theme-50 bg-white group mb-2 hover:border-theme-200 transition';
+                    li.className = 'flex items-center justify-between p-3 rounded-2xl border-2 border-theme-50 bg-white group mb-2 hover:border-theme-200 transition item-transition';
+                    li.style.animationDelay = (index * 0.04) + 's';
+
                     const isIncome = trans.type === 'income';
                     const isKoreksi = trans.isKoreksi;
                     
@@ -889,12 +921,8 @@
 
         formSheetSettings.addEventListener('submit', (e) => {
             e.preventDefault();
-            const newUrl = inputSheetUrl.value.trim();
-            sheetUrl = newUrl;
-            localStorage.setItem('tabungan_sheet_url', sheetUrl);
             closeSheetSettingsModal(); 
-            showToast('Tautan Sheets diperbarui!');
-            loadDataFromSheets();
+            showToast('Tautan Sheets permanen!');
         });
 
         function init() {
